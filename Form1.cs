@@ -65,7 +65,12 @@ namespace AIMHEAD_ON_OFF
 
         private string[] TaskName = new string[] { "HD-Player" };
         private EnzoMem Memory = new EnzoMem();
-        private string AimbotPattern = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 [...]";
+        
+        // ✅ FIXED: Complete your actual pattern here (replace with your real pattern from Cheat Engine)
+        // Example format: "12 34 56 78 9A BC DE F0 11 22 33 44 55 66 77 88"
+        // Use "??" for wildcard bytes
+        private string AimbotPattern = ""; // ← PUT YOUR COMPLETE PATTERN HERE!
+        
         private long ReadOffset = 0xAF;   // Offset 124 in decimal
         private long WriteOffset = 0xAB;
 
@@ -127,12 +132,46 @@ namespace AIMHEAD_ON_OFF
         private bool AimbotToggle = false;
 
         /// <summary>
+        /// ✅ Validation: Check if pattern is valid before scanning
+        /// </summary>
+        private bool ValidatePattern()
+        {
+            if (string.IsNullOrWhiteSpace(AimbotPattern))
+            {
+                MessageBox.Show("❌ ERROR: AimbotPattern is empty!\n\nPlease set your pattern from Cheat Engine.", "Pattern Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            try
+            {
+                string[] parts = AimbotPattern.Split(' ');
+                foreach (var part in parts)
+                {
+                    if (part != "??")
+                    {
+                        byte.Parse(part, System.Globalization.NumberStyles.HexNumber);
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ ERROR: Invalid pattern format!\n\n{ex.Message}\n\nMake sure your pattern is like:\n00 11 22 33 ?? 55 66 77", "Pattern Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// ✅ NEW METHOD: Load Addresses (First Step)
         /// Call this once to scan and cache addresses
         /// This is the slow operation (30-40s) but happens only ONCE
         /// </summary>
         private async void LoadAddressesClick(object sender, EventArgs e)
         {
+            // ✅ Validate pattern first
+            if (!ValidatePattern())
+                return;
+
             if (!Memory.SetProcess(TaskName))
             {
                 MessageBox.Show("Process not found", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -166,6 +205,7 @@ namespace AIMHEAD_ON_OFF
                 if (addresses == null || !addresses.Any())
                 {
                     UpdateLabel("Error: Pattern not found!", Color.Red);
+                    MessageBox.Show("Pattern not found in game memory. Make sure:\n1. The pattern is correct\n2. Game is running\n3. HD-Player process is active", "Pattern Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -268,6 +308,10 @@ namespace AIMHEAD_ON_OFF
         /// </summary>
         private async void guna2Button1_Click(object sender, EventArgs e)
         {
+            // ✅ Validate pattern first
+            if (!ValidatePattern())
+                return;
+
             if (!Memory.SetProcess(TaskName))
             {
                 MessageBox.Show("Process not found", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -347,6 +391,7 @@ namespace AIMHEAD_ON_OFF
             catch (Exception ex)
             {
                 UpdateLabel($"Error: {ex.Message}", Color.Red);
+                MessageBox.Show($"Injection Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
